@@ -5,7 +5,7 @@ from flask import Flask
 app = Flask(__name__)
  
 @app.route("/")
-def hello_world():
+def inicio():
     return {"message": "Hello, World!"}
 
 # Interface web da HOPE-IA Tecnologia do Brasil
