@@ -1,6 +1,12 @@
 from flask import Flask, render_template_string
 
-+ app = Flask(__name__)
+from flask import Flask
+ 
+app = Flask(__name__)
+ 
+@app.route("/")
+def hello_world():
+    return {"message": "Hello, World!"}
 
 # Interface web da HOPE-IA Tecnologia do Brasil
 interface_html = """
