@@ -1,6 +1,6 @@
 from flask import Flask, render_template_string, request, jsonify
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 # Template HTML/CSS/JS integrado para funcionamento direto
 HTML_TEMPLATE = """
@@ -170,7 +170,8 @@ def home():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    data = request.get_json() or {}
+    # Tratamento seguro caso os dados venham vazios ou mal formatados
+    data = request.get_json(silent=True) or {}
     user_message = data.get('message', '')
     
     # Resposta base da IA
@@ -178,7 +179,6 @@ def chat():
     
     return jsonify({'response': bot_reply})
 
-# Bloco essencial para prevenir erro 500 na Vercel:
-# Evita que o app.run() bloqueie o servidor serverless da Vercel.
-if _name_ == '_main_':
+# Bloco essencial para execução local e prevenção de conflitos em servidores serverless
+if __name__ == '__main__':
     app.run(debug=True)
