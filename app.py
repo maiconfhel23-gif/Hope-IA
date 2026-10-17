@@ -190,4 +190,103 @@ INTERFACE_HTML = r"""<!DOCTYPE html>
       const r = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.str
+        body: JSON.stringify({ modelo: seletor.value, mensagens: historico.slice(-12) })
+      });
+      const dados = await r.json();
+      const texto = dados.resposta || dados.erro || "Sem resposta.";
+      espera.textContent = texto;
+      if (dados.resposta) historico.push({ role: "assistant", content: dados.resposta });
+    } catch (erro) {
+      espera.textContent = "Não consegui falar com o servidor. Tente de novo.";
+    }
+  });
+
+  botaoCamera.addEventListener("click", () => arquivo.click());
+  arquivo.addEventListener("change", () => {
+    if (arquivo.files.length) adicionar("eu", "Foto anexada: " + arquivo.files[0].name + " (envio de imagens ainda não está ligado)");
+  });
+
+  const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (Reconhecimento) {
+    const voz = new Reconhecimento();
+    voz.lang = "pt-BR";
+    voz.interimResults = false;
+    voz.onresult = (ev) => { campo.value = ev.results[0][0].transcript; };
+    voz.onend = () => botaoMic.classList.remove("gravando");
+    botaoMic.addEventListener("click", () => { botaoMic.classList.add("gravando"); voz.start(); });
+  } else {
+    botaoMic.addEventListener("click", () => adicionar("ia", "Este navegador não tem reconhecimento de voz. Use o Chrome."));
+  }
+</script>
+</body>
+</html>
+"""
+
+
+@app.route("/")
+def inicio():
+    return Response(INTERFACE_HTML, mimetype="text/html")
+
+
+@app.route("/api/modelos")
+def modelos():
+    agora = time.time()
+    if _cache["lista"] and agora - _cache["hora"] < 3600:
+        return jsonify({"modelos": _cache["lista"]})
+    try:
+        dados = pedir(OPENROUTER + "/models", tempo=20)
+        lista = []
+        for m in dados.get("data", []):
+            id_modelo = m.get("id", "")
+            dono = id_modelo.split("/")[0]
+            if dono in FORNECEDORES and not id_modelo.endswith(":free"):
+                lista.append({
+                    "id": id_modelo,
+                    "nome": m.get("name") or id_modelo,
+                    "grupo": FORNECEDORES[dono],
+                })
+        lista.sort(key=lambda x: (x["grupo"], x["nome"]))
+        _cache["hora"] = agora
+        _cache["lista"] = lista
+        return jsonify({"modelos": lista})
+    except Exception:
+        return jsonify({"modelos": []})
+
+
+@app.route("/api/chat", methods=["POST"])
+def chat():
+    corpo = request.get_json(silent=True) or {}
+    modelo = corpo.get("modelo") or "openrouter/auto"
+    mensagens = [
+        {"role": m.get("role"), "content": str(m.get("content", ""))[:8000]}
+        for m in (corpo.get("mensagens") or [])[-12:]
+        if m.get("role") in ("user", "assistant")
+    ]
+    if not mensagens:
+        return jsonify({"erro": "Escreva uma mensagem."}), 400
+
+    chave = os.environ.get("OPENROUTER_API_KEY")
+    if not chave:
+        return jsonify({"erro": "Falta a chave OPENROUTER_API_KEY na Vercel (Settings > Environment Variables)."}), 500
+
+    try:
+        dados = pedir(
+            OPENROUTER + "/chat/completions",
+            {"model": modelo, "messages": [{"role": "system", "content": SISTEMA}] + mensagens},
+            chave=chave,
+        )
+        texto = dados["choices"][0]["message"]["content"]
+        return jsonify({"resposta": texto})
+    except urllib.error.HTTPError as e:
+        try:
+            detalhe = json.loads(e.read().decode()).get("error", {}).get("message", "")
+        except Exception:
+            detalhe = ""
+        return jsonify({"erro": "Erro " + str(e.code) + " do OpenRouter. " + detalhe}), 502
+    except Exception:
+        return jsonify({"erro": "Não consegui falar com a IA agora. Tente outro modelo."}), 502
+
+
+@app.route("/saude")
+def saude():
+    return jsonify({"status": "ok", "chave": bool(os.environ.get("OPENROUTER_API_KEY"))})
