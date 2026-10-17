@@ -1,7 +1,6 @@
 from flask import Flask, render_template_string
 
-app = Flask(_name_)
-app = Flask(__name__)
++ app = Flask(__name__)
 
 # Interface web da HOPE-IA Tecnologia do Brasil
 interface_html = """
