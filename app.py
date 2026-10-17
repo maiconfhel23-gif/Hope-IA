@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string, request, jsonify
+from flask import Flask, jsonify, render_template_string, request
 
 app = Flask(__name__)
 
@@ -164,21 +164,20 @@ HTML_TEMPLATE = """
 </html>
 """
 
-@app.route('/')
+
+@app.route("/")
 def home():
-    return render_template_string(HTML_TEMPLATE)
+  return render_template_string(HTML_TEMPLATE)
 
-@app.route('/api/chat', methods=['POST'])
+
+@app.route("/api/chat", methods=["POST"])
 def chat():
-    # Tratamento seguro caso os dados venham vazios ou mal formatados
-    data = request.get_json(silent=True) or {}
-    user_message = data.get('message', '')
-    
-    # Resposta base da IA
-    bot_reply = f"HOPE-IA recebeu: '{user_message}'. O sistema está funcional e pronto para integração!"
-    
-    return jsonify({'response': bot_reply})
+  data = request.get_json(silent=True) or {}
+  user_message = data.get("message", "")
+  bot_reply = f"HOPE-IA recebeu: '{user_message}'. O sistema está funcional e pronto para integração!"
+  return jsonify({"response": bot_reply})
 
-# Bloco essencial para execução local e prevenção de conflitos em servidores serverless
-if __name__ == '__main__':
-    app.run(debug=True)
+
+# Bloco essencial para execução local
+if __name__ == "__main__":
+  app.run(debug=True)
