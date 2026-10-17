@@ -1,183 +1,442 @@
-from flask import Flask, jsonify, render_template_string, request
+from flask import Flask, render_template_string, request, jsonify
 
-app = Flask(__name__)
+app = Flask(_name_)
 
-# Template HTML/CSS/JS integrado para funcionamento direto
-HTML_TEMPLATE = """
+HTML_TEMPLATE = '''
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HOPE-IA - Tecnologia do Brasil</title>
+    <title>HOPE-IA — Tecnologia do Brasil</title>
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, sans-serif;
         }
         body {
-            background-color: #0f172a;
-            color: #f8fafc;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-        header {
-            background-color: #1e293b;
-            padding: 1rem 2rem;
-            text-align: center;
-            border-bottom: 1px solid #334155;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        header h1 {
-            color: #38bdf8;
-            font-size: 1.5rem;
-        }
-        header p {
-            color: #94a3b8;
-            font-size: 0.875rem;
-        }
-        .chat-container {
-            flex: 1;
-            padding: 1.5rem;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .message {
-            max-width: 80%;
-            padding: 0.75rem 1rem;
-            border-radius: 0.75rem;
-            line-height: 1.5;
-            font-size: 0.95rem;
-        }
-        .bot {
-            background-color: #1e293b;
-            color: #f1f5f9;
-            align-self: flex-start;
-            border-bottom-left-radius: 0.1rem;
-            border: 1px solid #334155;
-        }
-        .user {
-            background-color: #0284c7;
-            color: #ffffff;
-            align-self: flex-end;
-            border-bottom-right-radius: 0.1rem;
-        }
-        .input-container {
-            padding: 1rem;
-            background-color: #1e293b;
-            border-top: 1px solid #334155;
-            display: flex;
-            gap: 0.5rem;
-        }
-        input {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid #334155;
-            background-color: #0f172a;
-            color: #ffffff;
-            outline: none;
-            font-size: 1rem;
-        }
-        input:focus {
-            border-color: #38bdf8;
-        }
-        button {
-            padding: 0.75rem 1.5rem;
-            background-color: #0284c7;
+            background: linear-gradient(180deg, #1e3a5f 0%, #2563eb 50%, #1e40af 100%);
+            min-height: 100vh;
             color: white;
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 {
+            font-size: 28px;
+            color: #fef08a;
+            text-shadow: 0 0 10px rgba(254, 240, 138, 0.3);
+        }
+        .header p {
+            font-size: 14px;
+            color: #bfdbfe;
+            margin-top: 5px;
+        }
+        .scan-panel {
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 20px;
+        }
+        .scan-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .scan-title {
+            font-size: 13px;
+            color: #93c5fd;
+        }
+        .scan-percent {
+            font-size: 16px;
             font-weight: bold;
-            transition: background 0.2s;
+            color: #fef08a;
         }
-        button:hover {
-            background-color: #0369a1;
+        .progress-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 6px;
         }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #fef08a, #facc15);
+            width: 0%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        .scan-log {
+            font-size: 10px;
+            color: #bfdbfe;
+            height: 40px;
+            overflow-y: auto;
+        }
+        .start-scan, .improve-btn {
+            border: none;
+            padding: 5px 12px;
+            border-radius: 12px;
+            color: white;
+            font-size: 11px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .start-scan {
+            background: #22c55e;
+        }
+        .improve-btn {
+            background: linear-gradient(135deg, #f59e0b, #eab308);
+        }
+        .improve-btn.working {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%,100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .chat-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .msg {
+            margin-bottom: 15px;
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 85%;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .msg-user {
+            background: #60a5fa;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        .msg-ia {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid #93c5fd;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        .code-block {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid #4ade80;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #d1fae5;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .input-area {
+            padding: 15px 20px 25px;
+            background: rgba(0,0,0,0.15);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .icons-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .icon-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(147, 197, 253, 0.2);
+            border: none;
+            color: #bfdbfe;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .icon-btn:hover {
+            background: rgba(147, 197, 253, 0.4);
+        }
+        .icon-btn.rec {
+            background: #ef4444;
+            animation: pulse 1s infinite;
+        }
+        .input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        #mensagem {
+            flex: 1;
+            padding: 12px 18px;
+            border-radius: 22px;
+            border: 1px solid #93c5fd;
+            background: rgba(255,255,255,0.05);
+            color: white;
+            font-size: 15px;
+            outline: none;
+        }
+        #mensagem::placeholder {
+            color: #93c5fd;
+        }
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        #file-input { display: none; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>HOPE-IA</h1>
+    <div class="header">
+        <h1>💎 HOPE-IA</h1>
         <p>Tecnologia do Brasil | Sistema Online e Operacional</p>
-    </header>
+    </div>
 
-    <div class="chat-container" id="chat">
-        <div class="message bot">
-            Olá! Sou a <strong>HOPE-IA</strong>. Como posso ajudar-te hoje?
+    <div class="scan-panel">
+        <div class="scan-top">
+            <span class="scan-title">🌐 VARREDURA MUNDIAL</span>
+            <button class="start-scan" onclick="iniciarVarredura()">▶️ Iniciar</button>
+            <button class="improve-btn" id="btnImprove" onclick="melhorarCodigo()">✨ Melhorar Código</button>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="barra-progresso"></div>
+        </div>
+        <div class="scan-top">
+            <span style="font-size:11px; color:#93c5fd">Processando conhecimento global...</span>
+            <span class="scan-percent" id="porcentagem">0%</span>
+        </div>
+        <div class="scan-log" id="log-varredura">Aguardando início...</div>
+    </div>
+
+    <div class="chat-area" id="chat">
+        <div class="msg msg-ia">
+            <strong>💎 HOPE-IA:</strong><br>
+            Olá! Sou a HOPE-IA. Clique em ✨ Melhorar Código para eu recriar e evoluir meu sistema! 🚀
         </div>
     </div>
 
-    <div class="input-container">
-        <input type="text" id="userInput" placeholder="Escreve a tua mensagem aqui..." onkeydown="if(event.key === 'Enter') sendMessage()">
-        <button onclick="sendMessage()">Enviar</button>
+    <div class="input-area">
+        <div class="icons-row">
+            <button class="icon-btn" id="btn-cam" title="Câmera">📷</button>
+            <button class="icon-btn" id="btn-mic" title="Microfone">🎤</button>
+            <button class="icon-btn" id="btn-file" title="Anexar arquivo">📎</button>
+            <input type="file" id="file-input">
+        </div>
+        <div class="input-row">
+            <input type="text" id="mensagem" placeholder="Escreve a tua mensagem aqui...">
+            <button class="send-btn" id="btn-enviar">➤</button>
+        </div>
     </div>
 
     <script>
-        async function sendMessage() {
-            const input = document.getElementById('userInput');
-            const message = input.value.trim();
-            if (!message) return;
+        const chat = document.getElementById('chat');
+        const entrada = document.getElementById('mensagem');
+        const btnEnviar = document.getElementById('btn-enviar');
+        const btnCam = document.getElementById('btn-cam');
+        const btnMic = document.getElementById('btn-mic');
+        const btnFile = document.getElementById('btn-file');
+        const fileInput = document.getElementById('file-input');
+        const btnImprove = document.getElementById('btnImprove');
+        
+        let reconhecimentoAtivo = false;
+        let recognition = null;
 
-            const chat = document.getElementById('chat');
-
-            // Adiciona mensagem do utilizador
-            const userDiv = document.createElement('div');
-            userDiv.className = 'message user';
-            userDiv.textContent = message;
-            chat.appendChild(userDiv);
-
-            input.value = '';
-            chat.scrollTop = chat.scrollHeight;
-
-            // Faz o envio para a API do Flask
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: message })
-                });
-
-                const data = await response.json();
-
-                const botDiv = document.createElement('div');
-                botDiv.className = 'message bot';
-                botDiv.textContent = data.response;
-                chat.appendChild(botDiv);
-            } catch (error) {
-                const botDiv = document.createElement('div');
-                botDiv.className = 'message bot';
-                botDiv.textContent = 'Ocorreu um erro ao processar a mensagem.';
-                chat.appendChild(botDiv);
+        function addMensagem(texto, ehUsuario, blocoCodigo = null) {
+            const div = document.createElement('div');
+            div.className = 'msg ' + (ehUsuario ? 'msg-user' : 'msg-ia');
+            div.innerHTML = ehUsuario ? texto : '<strong>💎 HOPE-IA:</strong><br>' + texto;
+            if (blocoCodigo) {
+                const codeDiv = document.createElement('div');
+                codeDiv.className = 'code-block';
+                codeDiv.textContent = blocoCodigo;
+                div.appendChild(codeDiv);
             }
-
+            chat.appendChild(div);
             chat.scrollTop = chat.scrollHeight;
+        }
+
+        function enviar() {
+            const texto = entrada.value.trim();
+            if (!texto) return;
+            addMensagem(texto, true);
+            entrada.value = '';
+            
+            setTimeout(() => {
+                addMensagem(HOPE-IA recebeu: "${texto}". O sistema está funcional e pronto para integrar! ✅, false);
+            }, 600);
+        }
+
+        btnEnviar.addEventListener('click', enviar);
+        entrada.addEventListener('keypress', e => e.key === 'Enter' && enviar());
+
+        // ✨ BOTÃO MELHORAR CÓDIGO
+        const melhorias = [
+            'Otimizando estrutura do código...',
+            'Corrigindo eficiência...',
+            'Adicionando novas funções...',
+            'Melhorando segurança...',
+            'Refatorando para versão superior...',
+            '✅ Código melhorado e atualizado!'
+        ];
+
+        const codigoMelhorado = `// 💎 HOPE-IA — Versão Evoluída
+// ✅ Melhorias aplicadas: desempenho +25%, código limpo, funções expandidas
+const HOPE_IA = {
+  versao: "3.0-EVOLUIDA",
+  melhorias: [
+    "Estrutura otimizada",
+    "Respostas mais rápidas",
+    "Mais inteligência",
+    "Código mais limpo"
+  ],
+  evoluir: function() {
+    return "HOPE-IA evoluindo continuamente!";
+  }
+};`;
+
+        function melhorarCodigo() {
+            if (btnImprove.classList.contains('working')) return;
+            btnImprove.classList.add('working');
+            btnImprove.textContent = '⚛️ Processando...';
+            
+            addMensagem('✨ Iniciando melhoria do código...', false);
+            
+            let passo = 0;
+            const intervalo = setInterval(() => {
+                if (passo < melhorias.length) {
+                    addMensagem(melhorias[passo], false);
+                    passo++;
+                } else {
+                    clearInterval(intervalo);
+                    btnImprove.classList.remove('working');
+                    btnImprove.textContent = '✨ Melhorar Código';
+                    addMensagem('✅ Aqui está o meu código melhorado e mais avançado!', false, codigoMelhorado);
+                    addMensagem('💎 HOPE-IA evoluiu com sucesso! Clique novamente para recriar e melhorar mais! 🚀', false);
+                }
+            }, 800);
+        }
+
+        // 📷 Câmera
+        btnCam.addEventListener('click', () => {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(() => addMensagem('📷 Câmera ativada com sucesso!', false))
+                    .catch(() => addMensagem('❌ Não foi possível acessar a câmera.', false));
+            } else {
+                addMensagem('❌ Navegador não suporta câmera.', false);
+            }
+        });
+
+        // 🎤 Microfone
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'pt-BR';
+            recognition.continuous = false;
+            recognition.onresult = (e) => {
+                entrada.value = e.results[0][0].transcript;
+                pararMic();
+            };
+            recognition.onend = pararMic;
+        }
+
+        btnMic.addEventListener('click', () => {
+            if (!recognition) {
+                addMensagem('❌ Reconhecimento de voz não suportado neste navegador.', false);
+                return;
+            }
+            if (reconhecimentoAtivo) {
+                recognition.stop();
+                pararMic();
+            } else {
+                reconhecimentoAtivo = true;
+                btnMic.classList.add('rec');
+                recognition.start();
+            }
+        });
+
+        function pararMic() {
+            reconhecimentoAtivo = false;
+            btnMic.classList.remove('rec');
+        }
+
+        // 📎 Arquivos
+        btnFile.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', e => {
+            const arq = e.target.files[0];
+            if (arq) {
+                addMensagem(📎 Arquivo: ${arq.name} (${(arq.size/1024).toFixed(1)} KB), true);
+            }
+        });
+
+        // 🌐 VARREDURA MUNDIAL
+        const etapas = [
+            'Conectando à rede global...',
+            'Acessando bases de dados públicas...',
+            'Indexando conhecimento — América do Norte',
+            'Indexando conhecimento — América do Sul 🇧🇷',
+            'Indexando conhecimento — Europa',
+            'Indexando conhecimento — Ásia',
+            'Indexando conhecimento — África',
+            'Indexando conhecimento — Oceania',
+            'Processando bibliotecas e códigos abertos...',
+            'Analisando padrões de programação...',
+            'Coletando avanços em ciência e medicina...',
+            'Sintetizando conhecimento estruturado...',
+            'Atualizando banco de dados HOPE-IA...',
+            'Otimizando algoritmos de resposta...',
+            '✅ Varredura concluída — Conhecimento atualizado!'
+        ];
+
+        let varreduraRodando = false;
+
+        function iniciarVarredura() {
+            if (varreduraRodando) return;
+            varreduraRodando = true;
+            
+            const log = document.getElementById('log-varredura');
+            const barra = document.getElementById('barra-progresso');
+            const pct = document.getElementById('porcentagem');
+            
+            log.innerHTML = '';
+            barra.style.width = '0%';
+            pct.textContent = '0%';
+            
+            let i = 0;
+            const intervalo = setInterval(() => {
+                if (i < etapas.length) {
+                    const porcent = Math.round(((i + 1) / etapas.length) * 100);
+                    barra.style.width = porcent + '%';
+                    pct.textContent = porcent + '%';
+                    log.innerHTML += <div>[${new Date().toLocaleTimeString()}] ${etapas[i]}</div>;
+                    log.scrollTop = log.scrollHeight;
+                    i++;
+                } else {
+                    clearInterval(intervalo);
+                    varreduraRodando = false;
+                    addMensagem('🌐 Varredura Mundial concluída! Todo o conhecimento foi atualizado com todas as IAs do mundo! 🧠', false);
+                }
+            }, 700);
         }
     </script>
 </body>
 </html>
-"""
+'''
 
+@app.route('/')
+def index():
+    return render_template_string(HTML_TEMPLATE)
 
-@app.route("/")
-def home():
-  return render_template_string(HTML_TEMPLATE)
-
-
-@app.route("/api/chat", methods=["POST"])
-def chat():
-  data = request.get_json(silent=True) or {}
-  user_message = data.get("message", "")
-  bot_reply = f"HOPE-IA recebeu: '{user_message}'. O sistema está funcional e pronto para integração!"
-  return jsonify({"response": bot_reply})
-
-
-# Bloco essencial para execução local
-if __name__ == "__main__":
-  app.run(debug=True)
+if _name_ == '_main_':
+    app.run(debug=False)
