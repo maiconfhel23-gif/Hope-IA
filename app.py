@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # ==============================================================
-# 💎 HOPE-IA TECNOLOGIA BRASIL — Núcleo Neural v3.5
+# 💎 HOPE-IA TECNOLOGIA BRASIL — Núcleo Neural v3.6
 # ==============================================================
 
 from flask import Flask, render_template_string, request, jsonify
 from datetime import datetime
+import zoneinfo
 import os
 import random
 
@@ -13,10 +14,12 @@ app = Flask(__name__)
 # Cérebro Central da Hope-IA - Processamento de Intenções e Respostas Inteligentes
 def motor_cerebro_hope(prompt, modelo):
     prompt_lower = prompt.lower()
-    data_atual = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
     
-    # Respostas contextuais avançadas para demonstrar inteligência real
-    if "dia" in prompt_lower or "data" in prompt_lower or "horas" in prompt_lower:
+    # Define o fuso horário exato de Brasília (America/Sao_Paulo)
+    fuso_brasilia = zoneinfo.ZoneInfo("America/Sao_Paulo")
+    data_atual = datetime.now(fuso_brasilia).strftime("%d/%m/%Y às %H:%M:%S")
+    
+    if "dia" in prompt_lower or "data" in prompt_lower or "horas" in prompt_lower or "hora" in prompt_lower:
         return f"💎 [Hope-IA Cérebro Neural]\n\nAtualmente são {data_atual} (Horário oficial de Brasília)."
     
     elif "quem é você" in prompt_lower or "o que é a hope" in prompt_lower:
@@ -26,7 +29,6 @@ def motor_cerebro_hope(prompt, modelo):
         return f"💎 [Hope-IA Motor de Engenharia de Software]\n\nAnálise do pedido concluída. Aqui está a estrutura solicitada otimizada:\n\n```python\n# Módulo gerado automaticamente pela Hope-IA\ndef solucao_otimizada():\n    print('Executando processo com alta performance.')\n    return True\n```"
 
     else:
-        # Resposta inteligente genérica simulando raciocínio profundo de IA avançada
         respostas_ia = [
             f"Analisei a sua questão ('{prompt}') através do núcleo unificado da Hope-IA. Os parâmetros indicam uma solução baseada em processamento lógico otimizado.",
             f"Compreendi o seu raciocínio. A infraestrutura tecnológica da Hope-IA processou os dados com suporte multimodelo e engenharia avançada.",
@@ -52,7 +54,6 @@ def chat():
 
 @app.route("/api/varredura", methods=["POST"])
 def varredura():
-    # Simula a varredura avançada e auto-análise do código do sistema
     modulos = ["Redes Neurais", "Motor de Inferência", "Segurança Cibernética", "Compilador Python", "APIs OpenRouter"]
     modulo_escolhido = random.choice(modulos)
     return jsonify({
@@ -75,10 +76,10 @@ interface_html = '''
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
 body { background: #07090e; color: #f3f4f6; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 15px; }
-header { text-align: center; margin-top: 10px; width: 100%; max-width: 700px; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; }
-header h1 { font-size: 18px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
+header { text-align: center; margin-top: 10px; width: 100%; max-width: 700px; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-wrap: nowrap; gap: 8px; }
+header h1 { font-size: 15px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 header h1 span { color: #3b82f6; }
-.model-select-top { background: #111827; border: 1px solid rgba(255,255,255,0.1); color: #9ca3af; font-size: 12px; padding: 6px 10px; border-radius: 8px; outline: none; cursor: pointer; }
+.model-select-top { background: #111827; border: 1px solid rgba(255,255,255,0.1); color: #9ca3af; font-size: 12px; padding: 6px 8px; border-radius: 8px; outline: none; cursor: pointer; flex-shrink: 0; }
 .container { width: 100%; max-width: 700px; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 15px; margin: 10px 0; }
 .output-box { background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 15px; min-height: 220px; max-height: 380px; overflow-y: auto; font-size: 13px; line-height: 1.6; color: #d1d5db; white-space: pre-wrap; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
 .input-area { background: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 10px 15px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
